@@ -9,7 +9,7 @@ source venv/Scripts/activate
 ```
 
 ```bash
-pip install flask requests matplotlib
+pip install flask requests matplotlib gevent tinyrpc protobuf pyzmq boto3 apschedul
 ```
 
 ```bash
