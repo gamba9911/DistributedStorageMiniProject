@@ -15,7 +15,6 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # ---- Where node_server.py stores its data (data/node_<id>/...) ----
 DATA_BASE_DIR = "data"
 
-# ---- Configure your nodes (must match the ports for node_server.py) ----
 NODE_ADDRESSES = {
     0: ("127.0.0.1", 6000),
     1: ("127.0.0.1", 6001),
@@ -25,7 +24,6 @@ NODE_ADDRESSES = {
     5: ("127.0.0.1", 6005),
 }
 
-# This LeadNodeSocket *is* your lead node and coordinator
 lead = LeadNodeSocket(node_addresses=NODE_ADDRESSES)
 
 # Keep placement metadata in memory
@@ -77,7 +75,7 @@ def reconstruct_from_nodes(file_id: str, placement_info: dict, output_path: str)
             f.write(chunk)
 
 
-# --- STORE FILE (lead node API) ---
+# --- STORE FILE ---
 @app.route("/store", methods=["POST"])
 def store():
     """
@@ -125,7 +123,7 @@ def store():
     }), 201
 
 
-# --- RETRIEVE FILE (lead node API) ---
+# --- RETRIEVE FILE ---
 @app.route("/retrieve/<object_id>", methods=["GET"])
 def retrieve(object_id):
     """

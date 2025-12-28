@@ -50,7 +50,6 @@ class LeadNodeSocket:
 
         with socket.create_connection((host, port)) as sock:
             sock.sendall(header + payload)
-            # Optional: read ACK
             try:
                 sock.recv(2)
             except Exception:
