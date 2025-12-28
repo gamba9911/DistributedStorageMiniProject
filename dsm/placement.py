@@ -3,7 +3,7 @@ from itertools import combinations
 from typing import List, Dict
 
 from dsm.config import PlacementStrategy
-
+from dsm.config import BUDDY_GROUP_SIZE
 
 class MinCopysetManager:
     """
@@ -33,26 +33,69 @@ def choose_random_nodes(replica_count: int, node_ids: List[int]) -> List[int]:
     return random.sample(node_ids, replica_count)
 
 
+def _partition_into_buddy_groups(node_ids: List[int], group_size: int) -> List[List[int]]:
+    """
+    Partition sorted node_ids into contiguous buddy groups.
+
+    Example: node_ids = [0,1,2,3,4,5,6,7], group_size = 3
+      -> [[0,1,2], [3,4,5], [6,7]]
+    """
+    sorted_ids = sorted(node_ids)
+    return [
+        sorted_ids[i:i + group_size]
+        for i in range(0, len(sorted_ids), group_size)
+    ]
+
+
 def choose_buddy_nodes(
     file_id: str,
     fragment_idx: int,
     replica_count: int,
     node_ids: List[int],
+    group_size: int | None = None,
 ) -> List[int]:
     """
-    BUDDY placement:
-    - Arrange nodes in a ring.
-    - Use a simple hash(file_id, fragment_idx) to pick a primary node.
-    - Next replica_count-1 nodes in the ring are buddies.
+    Facebook-style Buddy Group placement:
+      - Groups nodes in fixed-size groups
+      - Select a random group
+      - Replicas are placed inside that group
+
+    group_size priority:
+        1. Explicit argument (override)
+        2. dsm.config.BUDDY_GROUP_SIZE setting
+        3. Automatic based on replica_count and cluster size
     """
-    N = len(node_ids)
-    start_idx = (hash(file_id) + fragment_idx) % N
-    return [node_ids[(start_idx + offset) % N] for offset in range(replica_count)]
+    all_nodes = sorted(node_ids)
+
+    # ========== Select Group Size ==========
+    if group_size is not None:
+        final_group_size = group_size
+    elif BUDDY_GROUP_SIZE is not None:
+        final_group_size = BUDDY_GROUP_SIZE
+    else:
+        # Automatic fallback:
+        # - at least k
+        # - try to form ~3 or more groups if possible
+        N = len(all_nodes)
+        final_group_size = max(replica_count, max(3, N // 3))
+
+    buddy_groups = _partition_into_buddy_groups(all_nodes, final_group_size)
+    valid_groups = [g for g in buddy_groups if len(g) >= replica_count]
+
+    if not valid_groups:
+        # safety fallback → RANDOM
+        return choose_random_nodes(replica_count, all_nodes)
+
+    group = random.choice(valid_groups)
+    return random.sample(group, replica_count)
 
 
 class StrategySelector:
     """
-    Single interface for choosing nodes according to a placement strategy.
+    Central interface:
+      - RANDOM placement
+      - MIN_COPYSETS placement
+      - BUDDY GROUP placement (Facebook-style buddy groups)
     """
 
     def __init__(self, node_ids: List[int]):
@@ -75,6 +118,13 @@ class StrategySelector:
             return self.copyset_managers[k].choose_copyset()
 
         if strategy == PlacementStrategy.BUDDY:
-            return choose_buddy_nodes(file_id, fragment_idx, k, self.node_ids)
+            # Buddy *group* placement: choose group, then nodes within that group.
+            return choose_buddy_nodes(
+                file_id=file_id,
+                fragment_idx=fragment_idx,
+                replica_count=k,
+                node_ids=self.node_ids,
+                group_size=None,  # or set a fixed group size here if you prefer
+            )
 
         raise ValueError(f"Unknown placement strategy: {strategy}")

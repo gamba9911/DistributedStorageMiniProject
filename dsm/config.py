@@ -7,3 +7,5 @@ class PlacementStrategy(str, Enum):
     RANDOM = "random"
     MIN_COPYSETS = "min_copysets"
     BUDDY = "buddy"
+
+BUDDY_GROUP_SIZE = None
