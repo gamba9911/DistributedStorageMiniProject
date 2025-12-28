@@ -96,8 +96,6 @@ def run_experiments():
                     label, size, strategy, ingest_t, dl_t
                 ])
 
-            # ---- Plot histograms ----
-
             # Ingest
             plt.figure()
             plt.hist(ingest_times, bins=8)
@@ -128,7 +126,7 @@ def run_experiments():
 
     print("\n🎉 Measurement completed!")
     print(f"📁 Check output in folder: {OUTPUT_DIR}/")
-    print("📊 CSV + histograms ready for your report.\n")
+    print("📊 CSV + histograms ready.\n")
 
 
 if __name__ == "__main__":
