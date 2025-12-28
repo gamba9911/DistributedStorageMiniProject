@@ -13,5 +13,9 @@ pip install flask requests matplotlib gevent tinyrpc protobuf pyzmq boto3 apsche
 ```
 
 ```bash
+python3 -m pip install git+ssh://git@github.com/steinwurf/pyerasure@1.3.0
+```
+
+```bash
 deactivate
 ```
