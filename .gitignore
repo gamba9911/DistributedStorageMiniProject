@@ -1,4 +1,9 @@
 /storage
+/data
+__pycache__/
+*/__pycache__/
+*.pyc
+
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
