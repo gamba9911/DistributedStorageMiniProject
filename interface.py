@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
 
 # HOW TO RUN THIS CODE:
-# python3 interface.py
+# python3 interface.py 
 
 # HOW TO TEST THIS CODE:
 # create a file with this command: echo "hello world" > test.txt
