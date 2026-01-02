@@ -495,6 +495,13 @@ def loss_fraction():
         "N": len(NODE_NAMES),
     })
 
+@app.route("/services/reset_db", methods=["POST"])
+def reset_db():
+    db = get_db()
+    db.execute("DELETE FROM `file`")
+    db.commit()
+    return make_response({"status": "ok"})
+
 
 @app.errorhandler(500)
 def server_error(e):

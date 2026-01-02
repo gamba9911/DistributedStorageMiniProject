@@ -1,0 +1,6 @@
+placement_mode,s,lost_fraction,lost_files,total_files
+random,2,0.0,0,100
+random,3,0.0,0,100
+random,4,0.0,0,100
+random,6,0.02,2,100
+random,8,0.07,7,100

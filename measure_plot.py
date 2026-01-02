@@ -132,6 +132,9 @@ def run_measurements():
     print("Starting storage nodes ...")
     node_procs = start_storage_nodes()
 
+    print("Resetting database ...")
+    requests.post(f"{BASE_URL}/services/reset_db", timeout=10)
+
     try:
         print(f"\nUploading {N_MEASUREMENTS} files of {FILE_SIZES} bytes each ...")
         upload_file()
@@ -193,6 +196,9 @@ def plot_results(results):
     plt.ylim(0, 1)
     plt.title("Replication: fraction of lost files vs s")
     plt.tight_layout()
+    placement = os.getenv("PLACEMENT_MODE", "unknown")
+    img_name = f"loss_plot_{placement}_k=3.png"
+    plt.savefig(img_name, dpi=150)
     plt.show()
 
 
@@ -227,4 +233,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

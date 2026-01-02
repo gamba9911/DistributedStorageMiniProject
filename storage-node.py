@@ -31,7 +31,7 @@ def write_file(data, filename=None):
     :return: The file name of the newly written file, or None if there was an error
     """
     if not filename:
-        # Generate random filename 
+        # Generate random filename
         filename = random_string(length=8)
         # Add '.bin' extension
         filename += ".bin"
