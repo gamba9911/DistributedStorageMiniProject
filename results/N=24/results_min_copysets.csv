@@ -1,0 +1,6 @@
+placement_mode,s,lost_fraction,lost_files,total_files
+min_copysets,2,0.0,0,100
+min_copysets,3,0.0,0,100
+min_copysets,4,0.0,0,100
+min_copysets,6,0.12,12,100
+min_copysets,8,0.28,28,100

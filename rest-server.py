@@ -14,7 +14,9 @@ import messages_pb2 # Generated Protobuf messages
 import io # For sending binary data in a HTTP response
 import os
 import csv
-from config_selection import select_nodes
+from placement import StrategySelector
+from config import PlacementStrategy
+
 
 # ---------------- Configuration ----------------
 K_REPLICAS = int(os.getenv("K_REPLICAS", "3"))  # k full replicas
@@ -23,6 +25,9 @@ MEAS_FILE = "measure.csv"
 NODE_NAMES = os.getenv("NODE_NAMES", "node1,node2,node3,node4")
 NODE_NAMES = [n.strip() for n in NODE_NAMES.split(",") if n.strip()]
 NODES_STATE = [{"name": name, "copies": 0} for name in NODE_NAMES]
+NODE_IDS = list(range(len(NODE_NAMES)))
+PLACEMENT_STRATEGY = PlacementStrategy(PLACEMENT_MODE)
+selector = StrategySelector(NODE_IDS)
 HEARTBEAT_TIMEOUT = float(os.getenv("HEARTBEAT_TIMEOUT", "5")) 
 NODE_LAST_SEEN = {name: time.time() for name in NODE_NAMES}
 
@@ -111,30 +116,6 @@ def get_node_status():
     live = [name for name in NODE_LAST_SEEN.keys() if name not in dead]
     return live, dead
 
-
-# def select_nodes(strategy, k, nodes):
-#     """
-#     nodes list format:
-#     [
-#       {"name":"node1","copies":10,"endpoint":"tcp://127.0.0.1:6001"},
-#       {"name":"node2","copies":8,"endpoint":"tcp://127.0.0.1:6002"},
-#       ...
-#     ]
-#     """
-#     if strategy == "random":
-#         return random.sample(nodes, k)
-
-#     elif strategy == "mincopy":
-#         sorted_nodes = sorted(
-#             nodes,
-#             key=lambda n: (n.get("copies", 0), random.random())
-#         )
-#         return sorted_nodes[:k]
-
-#     elif strategy == "buddy":
-#         pass
-
-#
 
 # Initiate ZMQ sockets
 context = zmq.Context()
@@ -362,16 +343,23 @@ def add_files():
         print(f"Filenames for part {idx+1}: {names}")
 
         # Select nodes for this fragment according to placement strategy
-        selected_nodes = select_nodes(PLACEMENT_MODE, K_REPLICAS, NODES_STATE)
-        node_names_for_fragment = [node["name"] for node in selected_nodes]
+        selected_nodes = selector.select_nodes(
+            file_id=filename,       
+            fragment_idx=idx,
+            k=K_REPLICAS,
+            strategy=PLACEMENT_STRATEGY,
+        )
+
+        node_names_for_fragment = [NODE_NAMES[nid] for nid in selected_nodes]
+
         fragment_nodes_lists.append(node_names_for_fragment)
         print(f"Filenames for part {idx+1}: {names}")
         print(f"Nodes for part {idx+1}: {node_names_for_fragment}")
 
         # Send each replica to its selected node
-        for name, node in zip(names, selected_nodes):
-            node_name = node["name"]
-            node["copies"] += 1  # update placement statistics
+        for name, node_id in zip(names, selected_nodes):
+            node_name = NODE_NAMES[node_id]
+            NODES_STATE[node_id]["copies"] += 1        # update placement statistics
 
             task = messages_pb2.storedata_request()
             task.filename = name
