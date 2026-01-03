@@ -14,17 +14,15 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # Where node_server.py stores its fragments:
 DATA_BASE_DIR = "data"
 
-# Configure storage nodes (node_id -> host:port)
-NODE_ADDRESSES = {
-    0: ("127.0.0.1", 6000),
-    1: ("127.0.0.1", 6001),
-    2: ("127.0.0.1", 6002),
-    3: ("127.0.0.1", 6003),
-    4: ("127.0.0.1", 6004),
-    5: ("127.0.0.1", 6005),
-}
+def build_node_addresses():
+    # Defaults
+    n = int(os.environ.get("DSM_NODES", "6"))
+    host = os.environ.get("DSM_HOST", "127.0.0.1")
+    base_port = int(os.environ.get("DSM_BASE_PORT", "6000"))
 
-# Lead node instance (coordinator)
+    return {i: (host, base_port + i) for i in range(n)}
+
+NODE_ADDRESSES = build_node_addresses()
 lead = LeadNodeSocket(node_addresses=NODE_ADDRESSES)
 
 # In-memory placement info for replicated files (Task 1)

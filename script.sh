@@ -1,13 +1,24 @@
 #!/usr/bin/env bash
-PYTHON_BIN="python"
+set -euo pipefail
 
-echo "Starting storage nodes..."
-for i in 0 1 2 3 4 5; do
-    PORT=$((6000 + i))
-    echo "  Node $i → port $PORT"
-    $PYTHON_BIN node.py --id $i --port $PORT &
+N="${1:-6}"
+BASE_PORT="${DSM_BASE_PORT:-6000}"
+HOST="${DSM_HOST:-127.0.0.1}"
+PYTHON_BIN="${PYTHON_BIN:-python}"
+
+echo "Starting DSM with N=$N nodes (ports $BASE_PORT..$((BASE_PORT + N - 1)))"
+
+# Start nodes
+for ((i=0; i<N; i++)); do
+  PORT=$((BASE_PORT + i))
+  echo "  Node $i -> $HOST:$PORT"
+  "$PYTHON_BIN" node_server.py --id "$i" --port "$PORT" &
 done
 
+# Export so the lead knows how many nodes exist
+export DSM_NODES="$N"
+export DSM_BASE_PORT="$BASE_PORT"
+export DSM_HOST="$HOST"
 echo "Starting lead node (Web API on port 5000)..."
 $PYTHON_BIN demo.py &
 
@@ -22,7 +33,3 @@ echo "  GET  -> http://localhost:5000/retrieve/<object_id>"
 echo "  GET  -> http://localhost:5000/placement/<object_id>"
 echo "========================================"
 echo ""
-echo "💡 To stop all processes:"
-echo "   pkill -f node.py"
-echo "   pkill -f demo.py"
-echo "========================================"
