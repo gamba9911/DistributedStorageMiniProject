@@ -12,7 +12,7 @@ echo "Starting DSM with N=$N nodes (ports $BASE_PORT..$((BASE_PORT + N - 1)))"
 for ((i=0; i<N; i++)); do
   PORT=$((BASE_PORT + i))
   echo "  Node $i -> $HOST:$PORT"
-  "$PYTHON_BIN" node_server.py --id "$i" --port "$PORT" &
+  "$PYTHON_BIN" node.py --id "$i" --port "$PORT" &
 done
 
 # Export so the lead knows how many nodes exist

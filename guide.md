@@ -1,4 +1,8 @@
-# Guide for using the system
+# New Guide for using the system
+
+Simple start the measurements script for measurement 3 found in analysis/measurements3.py. This will start the cluster controller that will in turn start and stop nodes as needed.
+
+## (OUDATED FOR TASK 3) Guide for using the system
 
 ```bash
 python -m venv venv
