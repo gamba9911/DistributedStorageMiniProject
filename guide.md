@@ -24,7 +24,7 @@ python3 -m pip install git+http://git@github.com/steinwurf/pyerasure
 deactivate
 ```
 
-Change the config file found in dsm/config.py to set buddy size for grps, the number of fragments a file should be split into etc.
+Change the config file found in dsm/config.py to set buddy size for grps, the number of fragments a file should be split into etc. (Cant recommend changing the buddy config to less than c+l as the effective tolerance will be <l)
 
 Run the script with an argument for how many nodes need to be started e.g. ```./script.sh 6```
 

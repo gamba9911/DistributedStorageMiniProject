@@ -1,6 +1,7 @@
 import os
 import pickle
 import socket
+import random
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -205,18 +206,34 @@ class LeadNodeSocket:
             },
         }
 
-        # Place each coded fragment on a node
+        used_nodes = set()
+        total_needed = len(coded_frags)
+        N = len(self.node_ids)
+
         for frag in coded_frags:
-            # For Task 2: exactly ONE node per coded fragment.
-            selected_nodes = self.selector.select_nodes(
+            # 1) Ask the strategy for a preferred node (k=1)
+            preferred = self.selector.select_nodes(
                 file_id=file_id,
                 fragment_idx=frag.frag_id,
                 k=1,
                 strategy=strategy,
-            )
-            node_id = selected_nodes[0]
+            )[0]
 
-            # write to node (replica_idx = 0)
+            # 2) If we still have unused nodes available, avoid collisions
+            if len(used_nodes) < N:
+                if preferred in used_nodes:
+                    # pick any unused node as a fallback
+                    unused = [n for n in self.node_ids if n not in used_nodes]
+                    node_id = random.choice(unused)
+                else:
+                    node_id = preferred
+            else:
+                # no unused nodes left -> collisions unavoidable
+                node_id = preferred
+
+            used_nodes.add(node_id)
+
+            # Send fragment to selected node
             self._send_fragment_to_node(
                 node_id=node_id,
                 file_id=file_id,
@@ -232,6 +249,7 @@ class LeadNodeSocket:
                 "symbol_index": frag.symbol_index,
                 "coeffs_hex": frag.coeffs.hex() if frag.coeffs is not None else None,
             })
+
 
         # Remember everything for decode/retrieve
         self.coded_metadata[file_id] = placement_info
