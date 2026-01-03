@@ -15,22 +15,26 @@ class NodeRequestHandler(socketserver.BaseRequestHandler):
     """
 
     def handle(self):
-        # Read 8-byte length header
         length_bytes = self._read_exact(8)
-        if not length_bytes:
+        if len(length_bytes) < 8:
             return
-        msg_len = int.from_bytes(length_bytes, byteorder="big")
 
-        # Read the full message
+        msg_len = int.from_bytes(length_bytes, byteorder="big")
         payload = self._read_exact(msg_len)
+        if len(payload) < msg_len:
+            return
+
         msg = pickle.loads(payload)
 
         op = msg.get("op")
+        if op == "ping":
+            self.request.sendall(b"OK")
+            return
         if op == "store_fragment":
             self._handle_store_fragment(msg)
-        else:
-            # Unknown op – ignore for now
-            pass
+            return
+        self.request.sendall(b"??")
+
 
     def _read_exact(self, n: int) -> bytes:
         """

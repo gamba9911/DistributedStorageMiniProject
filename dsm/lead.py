@@ -128,7 +128,7 @@ class LeadNodeSocket:
         self,
         file_id: str,
         placement_info: dict,
-        data_dir_base: str = "data",
+        data_dir_base: str = "data"
     ) -> bytes:
         """
         Reconstruct a replicated file (Task 1) using the placement_info
@@ -137,26 +137,30 @@ class LeadNodeSocket:
         Assumes fragments are stored as:
           {data_dir_base}/node_<node_id>/<file_id>_frag<frag_idx>_rep0.bin
 
-        For each fragment, we read replica_idx = 0 from the first node
-        in the nodes list.
+        For each fragment, we read replica_idx = 0 from the first node THAT IS ALIVE
+        in the node candidte list.
         """
         fragments_data: List[bytes] = []
 
         for frag_meta in placement_info["fragments"]:
             frag_idx = frag_meta["fragment"]
-            node_ids = frag_meta["nodes"]
-            if not node_ids:
-                raise RuntimeError(f"No nodes recorded for fragment {frag_idx}")
+            candidates = frag_meta["nodes"]
 
-            node_id = node_ids[0]  # pick first node
-            node_dir = Path(data_dir_base) / f"node_{node_id}"
-            fragment_filename = f"{file_id}_frag{frag_idx}_rep0.bin"
-            fragment_path = node_dir / fragment_filename
+            frag_bytes = None
 
-            if not fragment_path.exists():
-                raise FileNotFoundError(f"Missing fragment: {fragment_path}")
+            for rep_idx, node_id in enumerate(candidates):
+                # optional: skip dead nodes early
+                if not self.is_node_alive(node_id):
+                    continue
 
-            frag_bytes = fragment_path.read_bytes()
+                fragment_path = Path(data_dir_base) / f"node_{node_id}" / f"{file_id}_frag{frag_idx}_rep{rep_idx}.bin"
+                if fragment_path.exists():
+                    frag_bytes = fragment_path.read_bytes()
+                    break
+
+            if frag_bytes is None:
+                raise RuntimeError(f"File lost: no surviving replica for fragment {frag_idx}")
+
             fragments_data.append(frag_bytes)
 
         return b"".join(fragments_data)
@@ -288,3 +292,15 @@ class LeadNodeSocket:
 
         coder = ErasureCoder(c=meta.c, l=meta.l)
         return coder.decode(meta, fragments)
+
+    def is_node_alive(self, node_id: int, timeout: float = 0.2) -> bool:
+        host, port = self.node_addresses[node_id]
+        try:
+            with socket.create_connection((host, port), timeout=timeout) as sock:
+                msg = {"op": "ping"}
+                payload = pickle.dumps(msg)
+                sock.sendall(len(payload).to_bytes(8, "big") + payload)
+                resp = sock.recv(2)
+                return resp == b"OK"
+        except Exception:
+            return False
