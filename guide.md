@@ -19,6 +19,7 @@ pip install flask requests matplotlib gevent tinyrpc protobuf pyzmq boto3 apsche
 ```bash
 python3 -m pip install git+http://git@github.com/steinwurf/pyerasure
 ```
+Can be python3 or python depending on which you use.
 
 ```bash
 deactivate
@@ -29,3 +30,5 @@ Change the config file found in dsm/config.py to set buddy size for grps, the nu
 Run the script with an argument for how many nodes need to be started e.g. ```./script.sh 6```
 
 Run a measurements file found in analysis/measurements.py or analysis/measurements2.py to start collecting data.
+
+(To run the measurements3.py script you need the following command from root [as it imports cluster controller module]: ```python -m analysis.measurements3```)

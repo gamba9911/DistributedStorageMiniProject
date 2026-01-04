@@ -197,4 +197,4 @@ def placement_coded(object_id: str):
 
 if __name__ == "__main__":
     # This process *is* the lead node + Web API
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)

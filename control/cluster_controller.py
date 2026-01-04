@@ -21,7 +21,7 @@ class ClusterController:
     def start_nodes(self, n: int):
         for i in range(n):
             port = self.base_port + i
-            p = subprocess.Popen([self.python_bin, "node_server.py", "--id", str(i), "--port", str(port)])
+            p = subprocess.Popen([self.python_bin, "node.py", "--id", str(i), "--port", str(port)])
             self.nodes[i] = NodeProc(node_id=i, port=port, popen=p)
 
     def start_lead_api(self, n: int):

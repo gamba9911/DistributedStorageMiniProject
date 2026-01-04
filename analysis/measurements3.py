@@ -6,12 +6,22 @@ import matplotlib.pyplot as plt
 
 from control.cluster_controller import ClusterController
 
+import shutil
+
+DATA_DIR = "data"
+
+def cleanup_data_dir():
+    if os.path.exists(DATA_DIR):
+        shutil.rmtree(DATA_DIR)
+        print("[CLEANUP] removed data/ directory")
+
 API = "http://127.0.0.1:5000"
-OUTDIR = "testData_task3"
+OUTDIR = "testData_task3_buddy"
 os.makedirs(OUTDIR, exist_ok=True)
 
 S_VALUES = [2, 3, 4, 6, 8]
-STRATEGIES = ["random", "min_copysets", "buddy"]
+STRATEGIES = ["buddy"]
+#STRATEGIES = ["random", "min_copysets", "buddy"]
 
 FILE_COUNT = 100
 FILE_SIZE = 1_000_000  # 1MB
@@ -28,7 +38,8 @@ def store_files_replication(strategy: str, k: int) -> list[str]:
         object_id = None
         with open("task3.bin", "rb") as f:
             r = requests.post(f"{API}/store", files={"file": f}, data={"k": k, "strategy": strategy})
-        r.raise_for_status()
+        if r.status_code != 201:
+            raise RuntimeError(f"store failed: {r.status_code} {r.text}")
         object_id = r.json()["object_id"]
         ids.append(object_id)
     return ids
@@ -39,7 +50,8 @@ def store_files_coded(strategy: str, c: int, l: int) -> list[str]:
     for _ in range(FILE_COUNT):
         with open("task3.bin", "rb") as f:
             r = requests.post(f"{API}/store_coded", files={"file": f}, data={"c": c, "l": l, "strategy": strategy})
-        r.raise_for_status()
+        if r.status_code != 201:
+            raise RuntimeError(f"store_coded failed: {r.status_code} {r.text}")
         ids.append(r.json()["object_id"])
     return ids
 
@@ -63,28 +75,27 @@ def fraction_lost_coded(object_ids: list[str]) -> float:
 
 
 def run_for_N(N: int):
-    # create file once
     make_file("task3.bin", FILE_SIZE)
-
-    results = []  # rows for plotting
-
-    ctrl = ClusterController()
-    ctrl.start_nodes(N)
-    ctrl.start_lead_api(N)
-    time.sleep(2)
-
-    # -------- Task 1 settings: N=12, k=3 --------
-    # -------- Task 2 settings: N=12, c=4, l=2 and l=3 --------
+    results = []
 
     for strategy in STRATEGIES:
-        # store once per strategy for each system, then apply multiple s values (like assignment)
-        rep_ids = store_files_replication(strategy=strategy, k=3)
-        ec_ids_l2 = store_files_coded(strategy=strategy, c=4, l=2)
-        ec_ids_l3 = store_files_coded(strategy=strategy, c=4, l=3)
-
         for s in S_VALUES:
-            victims = ctrl.stop_random_nodes(s)
+            print(f"Running N={N}, strategy={strategy}, s={s}")
+            # Start fresh cluster for this (strategy, s)
+            ctrl = ClusterController()
+            ctrl.start_nodes(N)
+            ctrl.start_lead_api(N)
+            time.sleep(2)
 
+            # Store files while all nodes are alive
+            rep_ids = store_files_replication(strategy=strategy, k=3)
+            ec_ids_l2 = store_files_coded(strategy=strategy, c=4, l=2)
+            ec_ids_l3 = store_files_coded(strategy=strategy, c=4, l=3)
+
+            # Kill exactly s nodes
+            ctrl.stop_random_nodes(s)
+
+            # Measure loss
             rep_loss = fraction_lost_replication(rep_ids)
             ec_loss_l2 = fraction_lost_coded(ec_ids_l2)
             ec_loss_l3 = fraction_lost_coded(ec_ids_l3)
@@ -93,8 +104,13 @@ def run_for_N(N: int):
             results.append((N, strategy, "ec_c4_l2", s, ec_loss_l2))
             results.append((N, strategy, "ec_c4_l3", s, ec_loss_l3))
 
-    ctrl.stop_all()
+            # Stop everything before next s
+            ctrl.stop_all()
+            cleanup_data_dir()
+            time.sleep(1)
+
     return results
+
 
 
 def plot_results(all_results):
