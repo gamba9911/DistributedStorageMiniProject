@@ -16,7 +16,7 @@ DATA_BASE_DIR = "data"
 
 def build_node_addresses():
     # Defaults
-    n = int(os.environ.get("DSM_NODES", "6"))
+    n = int(os.environ.get("DSM_NODES", "24"))
     host = os.environ.get("DSM_HOST", "127.0.0.1")
     base_port = int(os.environ.get("DSM_BASE_PORT", "6000"))
 
@@ -24,6 +24,9 @@ def build_node_addresses():
 
 NODE_ADDRESSES = build_node_addresses()
 lead = LeadNodeSocket(node_addresses=NODE_ADDRESSES)
+
+print(f"[Lead] DSM_NODES={os.environ.get('DSM_NODES')} -> {len(NODE_ADDRESSES)} nodes")
+print(f"[Lead] node ids: {sorted(NODE_ADDRESSES.keys())}")
 
 # In-memory placement info for replicated files (Task 1)
 PLACEMENTS: dict[str, dict] = {}

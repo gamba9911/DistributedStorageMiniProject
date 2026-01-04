@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 # =============================
 API_URL = "http://127.0.0.1:5000"
 
-TEST_RUNS = 10   # set to 100 for the real assignment
+TEST_RUNS = 10   # not 100 like task 1 specifies, to save time
 FILE_SIZES = [
     ("100KB", 100_000),
     ("1MB", 1_000_000),
@@ -23,9 +23,9 @@ STRATEGIES = ["random", "min_copysets", "buddy"]
 C = 4   # erasure parameter c
 L = 2   # erasure parameter l
 
-OUTPUT_DIR = "testData_task2"
+OUTPUT_DIR = "testData_task2_N24"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-OUTPUT_CSV = "task2_results.csv"
+OUTPUT_CSV = "task2_results_24.csv"
 
 
 # =============================
