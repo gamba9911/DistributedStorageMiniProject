@@ -154,7 +154,7 @@ def run_experiments():
 
     print("\n🎉 Task 2 measurement completed!")
     print(f"📁 Check output in folder: {OUTPUT_DIR}/")
-    print("📊 CSV + histograms ready for your report.\n")
+    print("📊 CSV + histograms ready\n")
 
 
 if __name__ == "__main__":
