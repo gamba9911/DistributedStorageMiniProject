@@ -9,3 +9,6 @@ class PlacementStrategy(str, Enum):
     BUDDY = "buddy"
 
 BUDDY_GROUP_SIZE = None
+
+ERASURE_C = 4   # number of source fragments (c)
+ERASURE_L = 2   # tolerated losses (l)

@@ -1,4 +1,8 @@
-# Guide for using the system
+# New Guide for using the system
+
+Simple start the measurements script for measurement 3 found in analysis/measurements3.py. This will start the cluster controller that will in turn start and stop nodes as needed.
+
+## (OUDATED FOR TASK 3) Guide for using the system
 
 ```bash
 python -m venv venv
@@ -9,9 +13,22 @@ source venv/Scripts/activate
 ```
 
 ```bash
-pip install flask requests matplotlib
+pip install flask requests matplotlib gevent tinyrpc protobuf pyzmq boto3 apschedul
 ```
+
+```bash
+python3 -m pip install git+http://git@github.com/steinwurf/pyerasure
+```
+Can be python3 or python depending on which you use.
 
 ```bash
 deactivate
 ```
+
+Change the config file found in dsm/config.py to set buddy size for grps, the number of fragments a file should be split into etc. (Cant recommend changing the buddy config to less than c+l as the effective tolerance will be <l)
+
+Run the script with an argument for how many nodes need to be started e.g. ```./script.sh 6```
+
+Run a measurements file found in analysis/measurements.py or analysis/measurements2.py to start collecting data.
+
+(To run the measurements3.py script you need the following command from root [as it imports cluster controller module]: ```python -m analysis.measurements3```)
