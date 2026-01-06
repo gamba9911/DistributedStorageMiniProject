@@ -1,4 +1,13 @@
 /storage
+/data
+__pycache__/
+*/__pycache__/
+*.pyc
+test.bin
+venv/
+/analysis/testData
+/uploads
+*.bin
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
